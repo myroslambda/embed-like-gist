@@ -10,6 +10,8 @@ function embed() {
   const showBorder = params.get("showBorder") === "on";
   const showLineNumbers = params.get("showLineNumbers") === "on";
   const showFileMeta = params.get("showFileMeta") === "on";
+  const firstLine = params.get("firstLine");
+  const numLines = params.get("numLines");
   const pathSplit = target.pathname.split("/");
   const user = pathSplit[1];
   const repository = pathSplit[2];
@@ -91,7 +93,7 @@ function embed() {
     const allDiv = document.getElementsByClassName(className);
     for (let i = 0; i < allDiv.length; i++) {
       if (allDiv[i].getElementsByClassName("lds-ring").length) {
-        embedCodeToTarget(allDiv[i], result[0], showBorder, showLineNumbers, showFileMeta, isDarkStyle, target.href, rawFileURL, fileExtension);
+        embedCodeToTarget(allDiv[i], result[0], firstLine, numLines, showBorder, showLineNumbers, showFileMeta, isDarkStyle, target.href, rawFileURL, fileExtension);
       }
     }
   }).catch((error) => {
@@ -106,6 +108,23 @@ ${error}`;
   });
 }
 
+/**
+ * Crop text by keeping only numLines starting from firstLine.
+ *
+ * @text The text to crop lines from.
+ * @firstLine The first line to keep (null means 0).
+ * @numLines The number of lines to keep (null means all lines till the end).
+ */
+function cropText(text,firstLine,numLines) {
+  if (firstLine == null && numLines == null) {
+    return text;
+  } else {
+    const fl = firstLine ? firstLine : 0;
+    const nl = numLines ? numLines : lines.length;
+    return text.toString().split('\n').slice(fl,fl+nl).join('\n');
+  }
+}
+
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -116,7 +135,7 @@ function loadScript(src) {
   });
 }
 
-function embedCodeToTarget(targetDiv, codeText, showBorder, showLineNumbers, showFileMeta, isDarkStyle, fileURL, rawFileURL, lang) {
+function embedCodeToTarget(targetDiv, codeText, firstLine, numLines, showBorder, showLineNumbers, showFileMeta, isDarkStyle, fileURL, rawFileURL, lang) {
   const fileContainer = document.createElement("div");
   fileContainer.style.margin = "1em 0";
 
@@ -136,7 +155,7 @@ function embedCodeToTarget(targetDiv, codeText, showBorder, showLineNumbers, sho
     }
   }
   code.classList.add(lang);
-  code.textContent = codeText;
+  code.textContent = cropText(codeText, firstLine, numLines);
   if (typeof hljs != "undefined" && typeof hljs.highlightBlock != "undefined") {
     hljs.highlightBlock(code);
   }
